@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:messenger_app/Screens%20Page/Auth/login_screen.dart';
+import 'package:messenger_app/Screens%20Page/home_screen.dart';
+import 'package:messenger_app/api/apis.dart';
 import 'package:messenger_app/main.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -18,10 +20,20 @@ class _SplashScreenState extends State<SplashScreen> {
     Future.delayed(Duration(milliseconds: 1500), () {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
       SystemChrome.setSystemUIOverlayStyle(
-        SystemUiOverlayStyle(statusBarColor: Colors.transparent),
+        SystemUiOverlayStyle(
+            systemNavigationBarColor: Colors.white,
+            statusBarColor: Colors.white),
       );
-      Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (_) => LoginScreen()));
+
+      if (Apis.auth.currentUser != null) {
+        debugPrint('User: ${Apis.auth.currentUser}');
+        debugPrint('UserAdditionalInfo: ${Apis.auth.currentUser}');
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (_) => HomeScreen()));
+      } else {
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (_) => LoginScreen()));
+      }
     });
   }
 

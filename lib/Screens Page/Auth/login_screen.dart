@@ -1,11 +1,10 @@
 import 'dart:io';
-import 'dart:math';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:messenger_app/Helper/Dialouge.dart';
 import 'package:messenger_app/Screens%20Page/home_screen.dart';
-import 'package:messenger_app/main.dart';
+import 'package:messenger_app/api/apis.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,59 +15,92 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool _isAnimate = false;
+
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    Future.delayed(Duration(milliseconds: 500), () {
+    Future.delayed(const Duration(milliseconds: 500), () {
       setState(() {
         _isAnimate = true;
       });
     });
   }
 
-  _handleGoogleButtonClick() {
-    _signInWithGoogle().then((user) {
-      if (user != null) {
-        log('\nUser: ${user.user}' as num);
-        log('\nUserAditionalInfo: ${user.additionalUserInfo}' as num);
+  void _handleGoogleButtonClick() async {
+    // Show loading indicator
+    Dialouge.showProgressBar(context);
+
+    // Attempt to sign in with Google
+    final user = await _signInWithGoogle();
+    Navigator.pop(context); // Remove the progress bar
+
+    if (user != null) {
+      // Log user info (ensure this doesn't cause crashes)
+      debugPrint('User: ${user.user}');
+      debugPrint('UserAdditionalInfo: ${user.additionalUserInfo}');
+
+      if ((await Apis.userExits())) {
         Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (_) => HomeScreen()));
+          context,
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+      } else {
+        await Apis.createUser().then((value) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const HomeScreen()),
+          );
+        });
       }
-    });
+
+      // Navigate to HomeScreen
+    }
   }
 
   Future<UserCredential?> _signInWithGoogle() async {
     try {
+      // Check internet connection
       await InternetAddress.lookup('google.com');
-      // Trigger the authentication flow
+
+      // Trigger the Google sign-in process
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) {
+        // User canceled the sign-in
+        Dialouge.showSnackbar(context, "Sign-in canceled!");
+        return null;
+      }
 
-      // Obtain the auth details from the request
-      final GoogleSignInAuthentication? googleAuth =
-          await googleUser?.authentication;
+      // Obtain auth details
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
 
-      // Create a new credential
+      // Create a credential for Firebase authentication
       final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth?.accessToken,
-        idToken: googleAuth?.idToken,
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
       );
 
-      // Once signed in, return the UserCredential
-      return await FirebaseAuth.instance.signInWithCredential(credential);
+      // Sign in with Firebase
+      return await Apis.auth.signInWithCredential(credential);
     } catch (e) {
-      log('\n_signInWithGoogle: $e' as num);
+      debugPrint('Error during Google sign-in: $e');
+      Dialouge.showSnackbar(context, "Something went wrong! Check Internet.");
       return null;
     }
   }
+  // _signOut()async{
+  //   await FirebaseAuth.instance.signOut();
+  //   await GoogleSignIn().signInSilently();
+  // }
 
   @override
   Widget build(BuildContext context) {
-    mq = MediaQuery.of(context).size;
+    final mq = MediaQuery.of(context).size;
+
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: Text("Welcome Chat of Duty"),
+        title: const Text("Welcome Chat of Duty"),
       ),
       body: Stack(
         children: [
@@ -76,7 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
             top: mq.height * .15,
             right: _isAnimate ? mq.width * .25 : -mq.width * .5,
             width: mq.width * .5,
-            duration: Duration(seconds: 1),
+            duration: const Duration(seconds: 1),
             child: Image.asset("images/icon.png"),
           ),
           Positioned(
@@ -85,30 +117,31 @@ class _LoginScreenState extends State<LoginScreen> {
             width: mq.width * .9,
             height: mq.height * .06,
             child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(255, 122, 202, 124),
-                    shape: StadiumBorder()),
-                onPressed: () {
-                  _handleGoogleButtonClick();
-                },
-                icon: Image.asset(
-                  "images/google.png",
-                  height: mq.height * .5,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 122, 202, 124),
+                shape: const StadiumBorder(),
+              ),
+              onPressed: _handleGoogleButtonClick,
+              icon: Image.asset(
+                "images/google.png",
+                height: mq.height * .03,
+              ),
+              label: RichText(
+                text: const TextSpan(
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 20,
+                  ),
+                  children: [
+                    TextSpan(text: 'Sign In with '),
+                    TextSpan(
+                      text: 'Google',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
                 ),
-                label: RichText(
-                  text: TextSpan(
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 20,
-                      ),
-                      children: [
-                        TextSpan(text: 'Sign In with '),
-                        TextSpan(
-                          text: 'Google',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ]),
-                )),
+              ),
+            ),
           ),
         ],
       ),
