@@ -1,4 +1,9 @@
+import 'dart:io';
+import 'dart:math';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:messenger_app/Screens%20Page/home_screen.dart';
 import 'package:messenger_app/main.dart';
 
@@ -20,6 +25,41 @@ class _LoginScreenState extends State<LoginScreen> {
         _isAnimate = true;
       });
     });
+  }
+
+  _handleGoogleButtonClick() {
+    _signInWithGoogle().then((user) {
+      if (user != null) {
+        log('\nUser: ${user.user}' as num);
+        log('\nUserAditionalInfo: ${user.additionalUserInfo}' as num);
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (_) => HomeScreen()));
+      }
+    });
+  }
+
+  Future<UserCredential?> _signInWithGoogle() async {
+    try {
+      await InternetAddress.lookup('google.com');
+      // Trigger the authentication flow
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+
+      // Obtain the auth details from the request
+      final GoogleSignInAuthentication? googleAuth =
+          await googleUser?.authentication;
+
+      // Create a new credential
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth?.accessToken,
+        idToken: googleAuth?.idToken,
+      );
+
+      // Once signed in, return the UserCredential
+      return await FirebaseAuth.instance.signInWithCredential(credential);
+    } catch (e) {
+      log('\n_signInWithGoogle: $e' as num);
+      return null;
+    }
   }
 
   @override
@@ -49,8 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     backgroundColor: const Color.fromARGB(255, 122, 202, 124),
                     shape: StadiumBorder()),
                 onPressed: () {
-                  Navigator.pushReplacement(
-                      context, MaterialPageRoute(builder: (_) => HomeScreen()));
+                  _handleGoogleButtonClick();
                 },
                 icon: Image.asset(
                   "images/google.png",

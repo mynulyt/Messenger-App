@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:messenger_app/Screens%20Page/home_screen.dart';
+import 'package:messenger_app/Screens%20Page/Auth/login_screen.dart';
 import 'package:messenger_app/main.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -21,7 +21,7 @@ class _SplashScreenState extends State<SplashScreen> {
         SystemUiOverlayStyle(statusBarColor: Colors.transparent),
       );
       Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (_) => HomeScreen()));
+          context, MaterialPageRoute(builder: (_) => LoginScreen()));
     });
   }
 
