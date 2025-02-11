@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:messenger_app/Helper/date_util.dart';
 import 'package:messenger_app/api/apis.dart';
 import 'package:messenger_app/main.dart';
 import 'package:messenger_app/model/message.dart';
@@ -21,6 +22,10 @@ class _MessageCardState extends State<MessageCard> {
 
   //for sender msg
   Widget _bluMessage() {
+    //for message read receive and sender upadte
+    if (widget.message.read.isEmpty) {
+      Apis.UpdateMessageReadStatus(widget.message);
+    }
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -49,7 +54,8 @@ class _MessageCardState extends State<MessageCard> {
         Padding(
           padding: EdgeInsets.only(right: mq.width * .04),
           child: Text(
-            widget.message.sent,
+            MyDateUtil.getFormattedTime(
+                context: context, time: widget.message.sent),
             style: TextStyle(
               fontSize: 13,
               color: Colors.black54,
@@ -73,16 +79,20 @@ class _MessageCardState extends State<MessageCard> {
             SizedBox(
               width: mq.width * .03,
             ),
-            Icon(
-              Icons.done_all_rounded,
-              size: 20,
-              color: Colors.blue,
-            ),
+            //for message read
+            if (widget.message.read.isNotEmpty)
+              Icon(
+                Icons.done_all_rounded,
+                size: 20,
+                color: Colors.blue,
+              ),
             SizedBox(
               width: mq.width * .02,
             ),
+            //send time of the msg
             Text(
-              '${widget.message.read}12:00 AM',
+              MyDateUtil.getFormattedTime(
+                  context: context, time: widget.message.sent),
               style: TextStyle(
                 fontSize: 13,
                 color: Colors.black54,
