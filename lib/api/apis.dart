@@ -116,6 +116,7 @@ class Apis {
       ChatUser user) {
     return firestore
         .collection('chats/${getConversationId(user.id)}/messages/')
+        .orderBy('sent', descending: true)
         .snapshots();
   }
 

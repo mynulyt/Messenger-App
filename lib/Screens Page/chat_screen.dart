@@ -6,7 +6,6 @@ import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:messenger_app/Helper/Dialouge.dart';
 import 'package:messenger_app/api/apis.dart';
 import 'package:messenger_app/main.dart';
 import 'package:messenger_app/model/message.dart';
@@ -22,7 +21,8 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  bool _showEmoji = false;
+  bool _showEmoji = false, _isUploading = false;
+
   List<Message> _list = [];
   final _textController = TextEditingController();
   @override
@@ -69,6 +69,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
                           if (_list.isNotEmpty) {
                             return ListView.builder(
+                              reverse: true,
                               padding: EdgeInsets.only(top: mq.height * 0.02),
                               physics: const BouncingScrollPhysics(),
                               itemCount: _list.length,
@@ -90,6 +91,17 @@ class _ChatScreenState extends State<ChatScreen> {
                     },
                   ),
                 ),
+                //for when image is uploading
+                if (_isUploading)
+                  Align(
+                      alignment: Alignment.centerRight,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 8, horizontal: 20),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                        ),
+                      )),
                 _chatInput(),
                 if (_showEmoji)
                   SizedBox(
@@ -201,7 +213,21 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ),
                   IconButton(
-                    onPressed: () {},
+                    onPressed: () async {
+                      final ImagePicker picker = ImagePicker();
+                      //for picking multiple images
+
+                      final List<XFile>? images =
+                          await picker.pickMultiImage(imageQuality: 70);
+                      //for uploading and sending image one by one
+
+                      for (var i in images!) {
+                        log('Image Path: ${i.path}');
+                        setState(() => _isUploading = true);
+                        await Apis.sendChatImages(widget.user, File(i.path));
+                        setState(() => _isUploading = false);
+                      }
+                    },
                     icon: Icon(
                       Icons.add_photo_alternate,
                       color: Colors.blueAccent,
@@ -214,12 +240,14 @@ class _ChatScreenState extends State<ChatScreen> {
                     onPressed: () async {
                       final ImagePicker picker = ImagePicker();
                       final XFile? image = await picker.pickImage(
-                          source: ImageSource.camera, imageQuality: 80);
+                          source: ImageSource.camera, imageQuality: 70);
                       if (image != null) {
                         log('Image Path: ${image.path}');
+                        setState(() => _isUploading = true);
 
                         await Apis.sendChatImages(
                             widget.user, File(image.path));
+                        setState(() => _isUploading = false);
                       }
                     },
                     icon: Icon(
