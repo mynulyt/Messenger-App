@@ -1,7 +1,12 @@
+import 'dart:developer';
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:messenger_app/Helper/Dialouge.dart';
 import 'package:messenger_app/api/apis.dart';
 import 'package:messenger_app/main.dart';
 import 'package:messenger_app/model/message.dart';
@@ -203,8 +208,20 @@ class _ChatScreenState extends State<ChatScreen> {
                       size: 26,
                     ),
                   ),
+
+                  //for send image from camrea button
                   IconButton(
-                    onPressed: () {},
+                    onPressed: () async {
+                      final ImagePicker picker = ImagePicker();
+                      final XFile? image = await picker.pickImage(
+                          source: ImageSource.camera, imageQuality: 80);
+                      if (image != null) {
+                        log('Image Path: ${image.path}');
+
+                        await Apis.sendChatImages(
+                            widget.user, File(image.path));
+                      }
+                    },
                     icon: Icon(
                       Icons.add_a_photo_rounded,
                       color: Colors.blueAccent,
@@ -219,7 +236,7 @@ class _ChatScreenState extends State<ChatScreen> {
           MaterialButton(
             onPressed: () {
               if (_textController.text.isNotEmpty) {
-                Apis.sendMessage(widget.user, _textController.text);
+                Apis.sendMessage(widget.user, _textController.text, Type.text);
                 _textController.text = '';
               }
             },
