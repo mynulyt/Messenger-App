@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'dart:io';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:image_picker/image_picker.dart';
@@ -38,9 +39,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
             backgroundColor: Colors.blueAccent,
             onPressed: () async {
               Dialouge.showProgressBar(context);
+
+              await Apis.updateActiveStatus(false);
+
               await Apis.auth.signOut().then((value) async {
                 await GoogleSignIn().signOut().then((value) {
                   Navigator.pop(context); // Hide progress dialog
+
+                  Apis.auth = FirebaseAuth.instance;
+
                   Navigator.pushReplacement(context,
                       MaterialPageRoute(builder: (_) => const LoginScreen()));
                 });

@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:messenger_app/Screens%20Page/profile_screen.dart';
 import 'package:messenger_app/api/apis.dart';
@@ -27,10 +28,25 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _initializeUser();
+    Apis.getSelfInfo();
   }
 
   Future<void> _initializeUser() async {
     await Apis.getSelfInfo();
+    SystemChannels.lifecycle.setMessageHandler((message) {
+      if (Apis.auth.currentUser != null) {
+        //active or online
+        if (message.toString().contains('resume')) {
+          Apis.updateActiveStatus(true);
+        }
+        //innactive or offline
+        if (message.toString().contains('pause')) {
+          Apis.updateActiveStatus(false);
+        }
+      }
+
+      return Future.value(message);
+    });
     setState(() {
       isLoading = false;
     });

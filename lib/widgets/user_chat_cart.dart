@@ -7,6 +7,7 @@ import 'package:messenger_app/api/apis.dart';
 import 'package:messenger_app/main.dart';
 import 'package:messenger_app/model/message.dart';
 import 'package:messenger_app/model/user_chat.dart';
+import 'package:messenger_app/widgets/profile_dialouge.dart';
 
 class UserChatCart extends StatefulWidget {
   final ChatUser user;
@@ -51,14 +52,22 @@ class _UserChatCartState extends State<UserChatCart> {
                 if (list.isNotEmpty) _message = list[0];
 
                 return ListTile(
-                  leading: ClipRRect(
-                    borderRadius: BorderRadius.circular(mq.height * .3),
-                    child: CachedNetworkImage(
-                      width: mq.height * .055,
-                      height: mq.height * .055,
-                      imageUrl: widget.user.image,
-                      errorWidget: (context, url, error) => const CircleAvatar(
-                          child: Icon(CupertinoIcons.person)),
+                  leading: InkWell(
+                    onTap: () {
+                      showDialog(
+                          context: context,
+                          builder: (_) => ProfileDialouge(user: widget.user));
+                    },
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(mq.height * .3),
+                      child: CachedNetworkImage(
+                        width: mq.height * .055,
+                        height: mq.height * .055,
+                        imageUrl: widget.user.image,
+                        errorWidget: (context, url, error) =>
+                            const CircleAvatar(
+                                child: Icon(CupertinoIcons.person)),
+                      ),
                     ),
                   ),
                   title: Text(widget.user.name),

@@ -3,7 +3,9 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:http/http.dart';
 import 'package:messenger_app/model/message.dart';
 import 'package:messenger_app/model/user_chat.dart';
 
@@ -23,6 +25,28 @@ class Apis {
   // Late variable for storing user information
   static late ChatUser me;
 
+  //For push notification
+  static FirebaseMessaging Fmessaging = FirebaseMessaging.instance;
+
+  //for sending push notification
+  static Future<void> sendNotification() async {
+    var url = Uri.https('example.com', 'whatsit/create');
+    var response = await post(url, body: {'name': 'doodle', 'color': 'blue'});
+    log('Response status: ${response.statusCode}');
+    log('Response body: ${response.body}');
+  }
+
+  //For getting firebase messaging token
+  static Future<void> getFirebaseMessafingToken() async {
+    await Fmessaging.requestPermission();
+    await Fmessaging.getToken().then((t) {
+      if (t != null) {
+        me.pushToken = t;
+        log('Push Token: $t');
+      }
+    });
+  }
+
   // Check if the user exists in Firestore
   static Future<bool> userExits() async {
     return (await firestore.collection('userss').doc(user.uid).get()).exists;
@@ -33,6 +57,8 @@ class Apis {
     final doc = await firestore.collection('userss').doc(user.uid).get();
     if (doc.exists) {
       me = ChatUser.fromJson(doc.data()!);
+      await getFirebaseMessafingToken();
+      Apis.updateActiveStatus(true);
       log('User data loaded: ${doc.data()}');
     } else {
       await createUser();
@@ -119,7 +145,8 @@ class Apis {
   static Future<void> updateActiveStatus(bool isOnline) async {
     firestore.collection('userss').doc(user.uid).update({
       'is_online': isOnline,
-      'last_active': DateTime.now().millisecondsSinceEpoch.toString()
+      'last_active': DateTime.now().millisecondsSinceEpoch.toString(),
+      'push_token': me.pushToken,
     });
   }
 

@@ -7,6 +7,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:messenger_app/Helper/date_util.dart';
+import 'package:messenger_app/Screens%20Page/view_user_profile_screen.dart';
 import 'package:messenger_app/api/apis.dart';
 import 'package:messenger_app/main.dart';
 import 'package:messenger_app/model/message.dart';
@@ -122,7 +123,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _appBar() {
     return InkWell(
-        onTap: () {},
+        onTap: () {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => ViewProfileScreen(user: widget.user)));
+        },
         child: StreamBuilder(
             stream: Apis.getUserInfo(widget.user),
             builder: (context, snapshot) {
@@ -240,7 +246,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           await picker.pickMultiImage(imageQuality: 70);
                       //for uploading and sending image one by one
 
-                      for (var i in images!) {
+                      for (var i in images) {
                         log('Image Path: ${i.path}');
                         setState(() => _isUploading = true);
                         await Apis.sendChatImages(widget.user, File(i.path));
